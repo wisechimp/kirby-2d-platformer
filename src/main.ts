@@ -1,7 +1,9 @@
+import { background } from "./components"
 import kaboomContext from "./kaboomContext"
+import { makeMap } from "./utils"
 
 const gameSetup = async () => {
-  kaboomContext.loadSprite("assets", "./assets/kirby-like.png", {
+  kaboomContext.loadSprite("assets", "./kirby-like.png", {
     sliceX: 9,
     sliceY: 10,
     anims: {
@@ -15,7 +17,24 @@ const gameSetup = async () => {
       bird: { from: 27, to: 28, speed: 4, loop: true },
       flame: { from: 36, to: 37, speed: 4, loop: true },
     },
-  })
+  });
+
+  kaboomContext.loadSprite("level-1", "./level-1.png");
+
+  const { map: level1Layout, spawnPoints: Level1SpawnPoints } = await makeMap(
+    kaboomContext,
+    "level-1"
+  )
+
+  kaboomContext.scene("level-1", () => {
+    kaboomContext.setGravity(2100)
+    kaboomContext.add(
+      background
+    )
+    kaboomContext.add(level1Layout)
+  });
+
+  kaboomContext.go("level-1");
 }
 
-gameSetup()
+gameSetup();
