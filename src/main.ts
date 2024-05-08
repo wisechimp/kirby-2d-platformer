@@ -1,4 +1,5 @@
 import { background } from "./components"
+import { makePlayer } from "./entities";
 import kaboomContext from "./kaboomContext"
 import { makeMap } from "./utils"
 
@@ -7,10 +8,10 @@ const gameSetup = async () => {
     sliceX: 9,
     sliceY: 10,
     anims: {
-      kirbIdle: 0,
-      kirbInhaling: 1,
-      kirbFull: 2,
-      kirbInhaleEffect: { from: 3, to: 8, speed: 15, loop: true },
+      kirbyIdle: 0,
+      kirbyInhaling: 1,
+      kirbyFull: 2,
+      kirbyInhaleEffect: { from: 3, to: 8, speed: 15, loop: true },
       shootingStar: 9,
       guyIdle: 18,
       guyWalk: { from: 18, to: 19, speed: 4, loop: true },
@@ -21,7 +22,7 @@ const gameSetup = async () => {
 
   kaboomContext.loadSprite("level-1", "./level-1.png");
 
-  const { map: level1Layout, spawnPoints: Level1SpawnPoints } = await makeMap(
+  const { map: level1Layout, spawnPoints: level1SpawnPoints } = await makeMap(
     kaboomContext,
     "level-1"
   )
@@ -32,6 +33,23 @@ const gameSetup = async () => {
       background
     )
     kaboomContext.add(level1Layout)
+
+    // Create our single controllable character
+    const kirby = makePlayer(
+      kaboomContext,
+      level1SpawnPoints.player[0].x,
+      level1SpawnPoints.player[0].y
+    );
+
+    kaboomContext.add(kirby);
+    kaboomContext.camScale(0.7, 0.7);
+    // This allows the camera to follow the player to the edge of the level
+    kaboomContext.onUpdate(() => {
+      if (kirby.pos.x < level1Layout.pos.x + 432)
+        // This allows the player to see ahead as he moves to the right
+        kaboomContext.camPos(kirby.pos.x + 500, 800);
+    })
+
   });
 
   kaboomContext.go("level-1");
