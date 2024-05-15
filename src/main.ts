@@ -1,5 +1,11 @@
 import { background } from "./components"
-import { makePlayer, setControls } from "./entities"
+import {
+  makeFlameEnemy,
+  makeBadGuyEnemy,
+  makePlayer,
+  setControls,
+  makeBirdEnemy,
+} from "./entities"
 import kaboomContext from "./kaboomContext"
 import { makeMap } from "./utils"
 
@@ -13,8 +19,8 @@ const gameSetup = async () => {
       kirbyFull: 2,
       kirbyInhaleEffect: { from: 3, to: 8, speed: 15, loop: true },
       shootingStar: 9,
-      guyIdle: 18,
-      guyWalk: { from: 18, to: 19, speed: 4, loop: true },
+      badGuyIdle: 18,
+      badGuyWalk: { from: 18, to: 19, speed: 4, loop: true },
       bird: { from: 27, to: 28, speed: 4, loop: true },
       flame: { from: 36, to: 37, speed: 4, loop: true },
     },
@@ -48,6 +54,28 @@ const gameSetup = async () => {
         // This allows the player to see ahead as he moves to the right
         kaboomContext.camPos(kirby.pos.x + 500, 868)
     })
+
+    console.log(level1SpawnPoints)
+
+    for (const flame of level1SpawnPoints.flame) {
+      makeFlameEnemy(kaboomContext, flame.x, flame.y)
+    }
+
+    for (const badGuy of level1SpawnPoints.badGuy) {
+      makeBadGuyEnemy(kaboomContext, badGuy.x, badGuy.y)
+    }
+
+    for (const bird of level1SpawnPoints.bird) {
+      const possibleSpeeds = [100, 200, 300]
+      kaboomContext.loop(10, () => {
+        makeBirdEnemy(
+          kaboomContext,
+          bird.x,
+          bird.y,
+          possibleSpeeds[Math.floor(Math.random() * possibleSpeeds.length)]
+        )
+      })
+    }
   })
 
   kaboomContext.go("level-1")

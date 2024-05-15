@@ -251,7 +251,7 @@
                 {
                  "height":0,
                  "id":13,
-                 "name":"badguy",
+                 "name":"badGuy",
                  "point":true,
                  "rotation":0,
                  "type":"",

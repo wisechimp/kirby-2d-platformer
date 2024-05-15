@@ -182,4 +182,161 @@ const setControls = (context: KaboomCtx, player: PlayerGameObject) => {
   })
 }
 
-export { makePlayer, setControls }
+const makeInhalable = (context: KaboomCtx, enemy: GameObj) => {
+  enemy.onCollide("inhaleZone", () => {
+    /*
+      This is a game property we create here on the fly
+      We could have created it when making the flame
+    */
+    enemy.isInhalable = true
+    console.log(enemy)
+  })
+
+  enemy.onCollideEnd("inhaleZone", () => {
+    enemy.isInhalable = false
+  })
+
+  enemy.onCollide("shootingStar", (shootingStar: GameObj) => {
+    context.destroy(enemy)
+    context.destroy(shootingStar)
+  })
+
+  const playerRef = context.get("player")[0]
+  enemy.onUpdate(() => {
+    if (playerRef.isInhaling && enemy.isInhalable) {
+      if (playerRef.direction === "right") {
+        enemy.move(-800, 0)
+        return
+      }
+      enemy.move(800, 0)
+    }
+  })
+}
+
+const makeFlameEnemy = (context: KaboomCtx, posX: number, posY: number) => {
+  const flame = context.add([
+    context.sprite("assets", { anim: "flame" }),
+    context.scale(scale),
+    context.pos(posX * scale, posY * scale),
+    context.area({
+      shape: new context.Rect(context.vec2(4, 6), 8, 10),
+      collisionIgnore: ["enemy"],
+    }),
+    context.body(),
+    /* 
+      This is for the character's AI. We create different states that the 
+      character can occupy (2 in this case) plus default.
+    */
+    context.state("idle", ["idle", "jump"]),
+    "enemy",
+  ])
+
+  makeInhalable(context, flame)
+
+  /*
+    So this AI starts the enemy as idle.
+    It waits a second then jumps.
+    When it returns to the ground it becomes idle again, and in doing so
+    begining to wait a second before jumping again etc.
+  */
+
+  flame.onStateEnter("idle", async () => {
+    await context.wait(1)
+    flame.enterState("jump")
+  })
+
+  flame.onStateEnter("jump", async () => {
+    /*
+      The jump function is available as we use the body component.
+      The value is the force of the jump.
+    */
+    flame.jump(1000)
+  })
+
+  flame.onStateUpdate("jump", async () => {
+    if (flame.isGrounded()) {
+      flame.enterState("idle")
+    }
+  })
+
+  return flame
+}
+
+const makeBadGuyEnemy = (context: KaboomCtx, posX: number, posY: number) => {
+  const badGuy = context.add([
+    context.sprite("assets", { anim: "badGuyWalk" }),
+    context.scale(scale),
+    context.pos(posX * scale, posY * scale),
+    context.area({
+      shape: new context.Rect(context.vec2(2, 3.9), 12, 12),
+      collisionIgnore: ["enemy"],
+    }),
+    context.body(),
+    context.state("idle", ["idle", "left", "right"]),
+    /*
+      In this case we added this property here, compared with the flame where the property was created on the fly. This is probably better!
+    */
+    { isInhalable: false, speed: 100 },
+    "enemy",
+  ])
+
+  makeInhalable(context, badGuy)
+
+  badGuy.onStateEnter("idle", async () => {
+    await context.wait(1)
+    badGuy.enterState("left")
+  })
+
+  badGuy.onStateEnter("left", async () => {
+    badGuy.flipX = false
+    await context.wait(2)
+    badGuy.enterState("right")
+  })
+
+  badGuy.onStateUpdate("left", async () => {
+    badGuy.move(-badGuy.speed, 0)
+  })
+
+  badGuy.onStateEnter("right", async () => {
+    badGuy.flipX = true
+    await context.wait(2)
+    badGuy.enterState("left")
+  })
+
+  badGuy.onStateUpdate("right", async () => {
+    badGuy.move(badGuy.speed, 0)
+  })
+}
+
+const makeBirdEnemy = (
+  context: KaboomCtx,
+  posX: number,
+  posY: number,
+  speed: number
+) => {
+  const bird = context.add([
+    context.sprite("assets", { anim: "bird" }),
+    context.scale(scale),
+    context.pos(posX * scale, posY * scale),
+    context.area({
+      shape: new context.Rect(context.vec2(4, 6), 8, 10),
+      collisionIgnore: ["enemy"],
+    }),
+    context.body({ isStatic: true }),
+    context.move(context.LEFT, speed),
+    context.offscreen({ destroy: true, distance: 400 }),
+    "enemy",
+  ])
+
+  makeInhalable(context, bird)
+
+  return bird
+}
+
+export {
+  makeBadGuyEnemy,
+  makeBirdEnemy,
+  makeFlameEnemy,
+  makePlayer,
+  setControls,
+}
